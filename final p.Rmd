@@ -1,0 +1,149 @@
+```{r}
+library(tidyverse)
+library(here)
+library(dplyr)
+library(janitor)
+library(tidyverse)
+```
+
+```{r}
+c1 = read.csv("cancerstats1.csv")
+```
+
+```{r}
+top20states <- top_n(c1, 20, Percentage.of.cases)
+top20states
+```
+
+```{r}
+c2 = read_csv("cancerstats3.csv")
+c2
+```
+
+```{r}
+c3 = read.csv("cancerstats2.csv")
+c3
+```
+
+Goal: 
+I am going to look at skin cancer statistics and analyze who is most prone and why. I also want to analyze how much the methods of protection actually work at preventing skin cancer. Lastly, I want to determine whether tanning is ever safe. 
+
+Motivation for my analysis:
+Growing up, I used to always lay out in the sun and get burnt, and my sister who is a dermatologist would always tell me how dangerous the sun is. I learned more about it, was shocked by what I found, and completely stopped tanning and became much more careful about protecting myself. Luckily, I was able to stop at an early age, but many people are unaware of how dangerous the sun really is. I want to spread awareness so they can begin to protect themselves too. 
+
+Introduction:
+Skin cancer is the most common form of cancer. One in five people will develop it and ten thousand people are diagnosed with it every day. More than two people die of skin cancer in the U.S. every hour. According to the FDA, the annual cost of treating skin cancers in the U.S. is slightly over 8 billion dollars. More people are diagnosed with skin cancer each year in the U.S. than all other cancers combined. The most common way people can get skin cancer is from the UV radiation emitted by the sun. The Skin Cancer Foundation even says that sunscreen alone can't protect from the dangers of the sun.
+
+Data Collection:
+I collected data from the Centers of Disease Control and Prevention (CDC) as part of the “Cancer Data”. I collected three different data sets. 
+- The first data set is trends and rates of skin cancer for every state in the US. I narrowed it down to 20 different states that I was interested in. 
+- The second data set is skin cancer rates for the different races in the US for males and females. 
+- The third data set is how the number of skin cancer cases in the US have changed over time.
+
+
+Before the analysis, let's clean up the data and transform it
+
+```{r}
+clean = clean_names(top20states)
+colnames(clean)
+clean2 = clean_names(c2)
+colnames(clean2)
+clean3 = clean_names(c3)
+colnames(clean3)
+```
+
+```{r}
+clean_x = clean %>% remove_empty(whic=c("rows"))
+clean_x = clean %>% remove_empty(whic=c("cols"))
+clean_x2 = clean2 %>% remove_empty(whic=c("rows"))
+clean_x2 = clean2 %>% remove_empty(whic=c("cols"))
+clean_x3 = clean3 %>% remove_empty(whic=c("rows"))
+clean_x3 = clean3 %>% remove_empty(whic=c("cols"))
+clean_x
+clean_x2
+clean_x3
+```
+
+```{r}
+c2 %>% pivot_longer(c(`Case Count`, `Population`, `Percent`),
+                           names_to="Stats",
+                           values_to="Values")
+```
+
+Now, let's do some analysis on each data set
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(data = c3, aes(x = `Year`, y = `Case.Count`)) + geom_point() 
+```
+From this plot we can see that the number of new skin cancer cases increases each year at a pretty steady pace. 
+
+```{r}
+mean(c3$Case.Count)
+mean(c3$Population)
+```
+
+There is an average of about 66,132 cases per year out of an average of a 304,620,123 population
+
+```{r}
+ggplot(data = top20states, aes(x= `Percentage.of.cases`)) + geom_histogram(binwidth = .5)
+```
+
+
+```{r}
+top20states$Case.Count<- as.numeric(as.character(top20states$Case.Count))
+ggplot(data = top20states, aes(x= `White.Percentage`)) + geom_histogram(binwidth = 4)
+```
+
+```{r}
+ggplot(data = top20states, aes(x= `Annual.sunshine.days`)) + geom_histogram(binwidth = 5)
+```
+Looking at data set 2 (c2) and seeing that white people are more prone to skin cancer, let's see whether there is a correlation between the states with a greater percentage of white people and the percentage of skin cancer cases in that state. 
+
+```{r}
+ggplot(data = top20states, aes(x = `White.Percentage`, y = `Percentage.of.cases`)) + geom_point()
+```
+Surprisingly, there doesn't seem to be a major correlation as I expected. There is no pattern in this plot.
+
+Now, let's see whether there is a correlation between the states with more annual sunshine days and their number of skin cancer cases.
+
+```{r}
+ggplot(data = top20states, aes(x = `Annual.sunshine.days`, y = `Percentage.of.cases`)) + geom_point()
+```
+
+There doesn't seem to be a major pattern. 
+
+Lastly, I want to see whether states with a higher percentage of people above 65 have a higher number of skin cancer cases. 
+```{r}
+top20states$Case.Count <- as.numeric(as.character(top20states$Case.Count))
+ggplot(data = top20states, aes(x = `Percent.sun`, y = `Percentage.of.cases`)) + geom_point()
+```
+
+There doesn't seem to be a major correlation.
+
+```{r}
+msun <- lm(Percentage.of.cases ~ `Annual.sunshine.days` , data = top20states)
+summary(msun)
+```
+
+```{r}
+mw <- lm(Percentage.of.cases ~ `White.Percentage` , data = top20states)
+summary(mw)
+```
+
+
+```{r}
+mps <- lm(Percentage.of.cases ~ `Percent.sun` , data = top20states)
+summary(mps)
+```
+
+After analyzing, it seems that there really isn't a strong correlation between age above 65, percent of sun, annual sunshine days, and percent of white people and the number of cases or percentage of skin cancer cases for that state. 
+
+To conclude, most skin cancers are caused by too much exposure to ultraviolet (UV) rays. After analysis of the different US states and their characteristics such as percent of age above 65, percent of sun, annual sunshine days, and percent of white people, it seems that although some states that are more "sunny" do have more cases, there is no strong pattern. There are even some very sunny states that have very few cases. 
+
+After researching more about sunscreen, it is clear that anyone who isn't careful about a sun protection strategy is at a high risk, wherever they live. According to all, sunscreen itself is not enough and one must have other forms of protection too. For example, sitting in the shade, wearing a sunhat, and wearing sunglasses are all parts of a proper sun protection strategy.
+
+
